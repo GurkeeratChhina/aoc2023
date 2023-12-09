@@ -11,7 +11,16 @@ func check(e error) {
 	}
 }
 
+func contains(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
-	fmt.Println("Part 1: ", d2p1())
-	fmt.Println("Part 2: ", d2p2())
+	fmt.Println("Part 1: ", d3p1())
+	fmt.Println("Part 2: ", d3p2())
 }
