@@ -7,7 +7,7 @@ import (
 	"regexp"
 )
 
-const input = "../inputs/d1.txt"
+const input1 = "../inputs/d1.txt"
 
 func digit_word_to_int(x string) int {
 	switch {
@@ -39,7 +39,7 @@ func digit_word_to_int(x string) int {
 func d1(regexinput string) int {
 	sum := 0
 
-	file, err := os.Open(input)
+	file, err := os.Open(input1)
 	check(err)
 	defer file.Close()
 

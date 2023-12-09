@@ -12,6 +12,6 @@ func check(e error) {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d1p1())
-	fmt.Println("Part 2: ", d1p2())
+	fmt.Println("Part 1: ", d2p1())
+	fmt.Println("Part 2: ", d2p2())
 }
