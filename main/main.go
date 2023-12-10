@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 )
 
 func check(e error) {
@@ -20,7 +21,30 @@ func contains(s []int, e int) bool {
 	return false
 }
 
+func intersect_ints(s1, s2 []int) (intersection []int) {
+	hash := make(map[int]bool)
+	for _, e := range s1 {
+		hash[e] = true
+	}
+	for _, e := range s2 {
+		// If elements present in the hashmap then append intersection list.
+		if hash[e] {
+			intersection = append(intersection, e)
+			hash[e] = false
+		}
+	}
+	return
+}
+
+func sliceAtoI(s []string) (r []int) {
+	for _, e := range s {
+		x, _ := strconv.Atoi(e)
+		r = append(r, x)
+	}
+	return
+}
+
 func main() {
-	fmt.Println("Part 1: ", d3p1())
-	fmt.Println("Part 2: ", d3p2())
+	fmt.Println("Part 1: ", d4p1())
+	fmt.Println("Part 2: ", d4p2())
 }
