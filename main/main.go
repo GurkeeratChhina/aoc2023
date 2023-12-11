@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 )
 
@@ -44,7 +45,38 @@ func sliceAtoI(s []string) (r []int) {
 	return
 }
 
+func extract_nums(s string) []int {
+	r := regexp.MustCompile("\\d+")
+	return sliceAtoI(r.FindAllString(s, -1))
+}
+
+func intersect_intervals(ab, cd []int) []int {
+	if ab[0] >= cd[1] || ab[1] <= cd[0] {
+		return nil
+	} else {
+		return []int{max(ab[0], cd[0]), min(ab[1], cd[1])}
+	}
+}
+
+func interval_subtract(ab, cd []int) [][]int {
+	if ab[0] < cd[0] && ab[1] > cd[1] {
+		//second interval is inside first
+		return [][]int{[]int{ab[0], cd[0]}, []int{cd[1], ab[1]}}
+	} else if ab[0] >= cd[0] && ab[1] <= cd[1] {
+		// second interval is superset of first
+		return [][]int{}
+	} else if ab[0] >= cd[0] && ab[1] > cd[1] {
+		// second interval is to the left of first
+		return [][]int{[]int{cd[1], ab[1]}}
+	} else if ab[0] < cd[0] && ab[1] <= cd[1] {
+		//second interval is to the right of first
+		return [][]int{[]int{ab[0], cd[0]}}
+	} else {
+		panic("interval_subtract invalid intervals")
+	}
+}
+
 func main() {
-	fmt.Println("Part 1: ", d4p1())
-	fmt.Println("Part 2: ", d4p2())
+	fmt.Println("Part 1: ", d5p1())
+	fmt.Println("Part 2: ", d5p2())
 }
