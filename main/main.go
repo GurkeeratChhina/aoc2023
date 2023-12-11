@@ -61,22 +61,22 @@ func intersect_intervals(ab, cd []int) []int {
 func interval_subtract(ab, cd []int) [][]int {
 	if ab[0] < cd[0] && ab[1] > cd[1] {
 		//second interval is inside first
-		return [][]int{[]int{ab[0], cd[0]}, []int{cd[1], ab[1]}}
+		return [][]int{{ab[0], cd[0]}, {cd[1], ab[1]}}
 	} else if ab[0] >= cd[0] && ab[1] <= cd[1] {
 		// second interval is superset of first
 		return [][]int{}
 	} else if ab[0] >= cd[0] && ab[1] > cd[1] {
 		// second interval is to the left of first
-		return [][]int{[]int{cd[1], ab[1]}}
+		return [][]int{{cd[1], ab[1]}}
 	} else if ab[0] < cd[0] && ab[1] <= cd[1] {
 		//second interval is to the right of first
-		return [][]int{[]int{ab[0], cd[0]}}
+		return [][]int{{ab[0], cd[0]}}
 	} else {
 		panic("interval_subtract invalid intervals")
 	}
 }
 
 func main() {
-	fmt.Println("Part 1: ", d5p1())
-	fmt.Println("Part 2: ", d5p2())
+	fmt.Println("Part 1: ", d6p1())
+	fmt.Println("Part 2: ", d6p2())
 }
