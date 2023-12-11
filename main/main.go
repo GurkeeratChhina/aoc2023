@@ -77,6 +77,6 @@ func interval_subtract(ab, cd []int) [][]int {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d6p1())
-	fmt.Println("Part 2: ", d6p2())
+	fmt.Println("Part 1: ", d7p1())
+	fmt.Println("Part 2: ", d7p2())
 }
