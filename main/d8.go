@@ -42,7 +42,7 @@ func d8(input_condition, end_condition func(string) bool) int {
 
 	ditree := binary_ditree(*scanner)
 	var cycles []int
-	for key, _ := range ditree {
+	for key := range ditree {
 		if input_condition(key) {
 			current_key := key
 			for i := 0; ; i++ {

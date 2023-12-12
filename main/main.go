@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+const inputtest = "../inputs/test.txt"
+
 func check(e error) {
 	if e != nil {
 		log.Fatal(e)
@@ -99,6 +101,6 @@ func LCM_slice(s []int) int {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d9p1())
-	fmt.Println("Part 2: ", d9p2())
+	fmt.Println("Part 1: ", d10p1())
+	fmt.Println("Part 2: ", d10p2())
 }
