@@ -76,7 +76,29 @@ func interval_subtract(ab, cd []int) [][]int {
 	}
 }
 
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+// find Least Common Multiple (LCM) via GCD
+func LCM(a, b int) int {
+	return a * b / GCD(a, b)
+}
+
+func LCM_slice(s []int) int {
+	l := s[0]
+	for _, i := range s {
+		l = LCM(l, i)
+	}
+	return l
+}
+
 func main() {
-	fmt.Println("Part 1: ", d7p1())
-	fmt.Println("Part 2: ", d7p2())
+	fmt.Println("Part 1: ", d8p1())
+	fmt.Println("Part 2: ", d8p2())
 }
