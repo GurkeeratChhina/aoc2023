@@ -46,7 +46,7 @@ func sliceAtoI(s []string) (r []int) {
 }
 
 func extract_nums(s string) []int {
-	r := regexp.MustCompile("\\d+")
+	r := regexp.MustCompile("-?\\d+")
 	return sliceAtoI(r.FindAllString(s, -1))
 }
 
@@ -99,6 +99,6 @@ func LCM_slice(s []int) int {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d8p1())
-	fmt.Println("Part 2: ", d8p2())
+	fmt.Println("Part 1: ", d9p1())
+	fmt.Println("Part 2: ", d9p2())
 }
