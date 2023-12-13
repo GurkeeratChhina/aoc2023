@@ -19,15 +19,15 @@ func pairwise_dist(xs []int) (sum int) {
 
 // expands a sorted array
 func expand(xs []int, amount int) {
-	next := xs[len(xs)-1]
-	for i := len(xs) - 2; i >= 0; i-- {
-		if next-xs[i] > 1 {
-			for j := i + 1; j < len(xs); j++ {
-				xs[j] += amount * (next - xs[i] - 1)
-			}
+	to_expand := 0
+	for i := 1; i < len(xs); i++ {
+		dist := xs[i] - xs[i-1] - 1
+		xs[i-1] += amount * to_expand
+		if dist > 0 {
+			to_expand += dist
 		}
-		next = xs[i]
 	}
+	xs[len(xs)-1] += amount * to_expand
 }
 
 func star_locs(file string) (xs, ys []int) {
