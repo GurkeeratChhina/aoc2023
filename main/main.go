@@ -101,6 +101,6 @@ func LCM_slice(s []int) int {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d10p1())
-	fmt.Println("Part 2: ", d10p2())
+	fmt.Println("Part 1: ", d11p1())
+	fmt.Println("Part 2: ", d11p2())
 }
