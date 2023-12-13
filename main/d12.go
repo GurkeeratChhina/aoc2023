@@ -31,37 +31,67 @@ func picross_isEqual(data1, data2 *picross) bool {
 	return false
 }
 
-func trim_picross(data *picross) {
-	if slice_sum(data.nums)+len(data.nums)-1 >= len(strings.Split(data.sequence, "")) {
-		return
-	}
+func trim_picross(data *picross) bool {
+	fmt.Println("called trim", data)
 	if len(data.nums) == 0 {
-		return
+		return true
+	}
+	if slice_sum(data.nums)+len(data.nums)-1 > len(strings.Split(data.sequence, "")) {
+		return false
+	}
+	if slice_sum(data.nums)+len(data.nums)-1 == len(strings.Split(data.sequence, "")) {
+		return true
 	}
 	fmt.Println("trimming", data)
 	res := false
 	data.sequence = strings.Trim(data.sequence, ".")
 
-	//trim #'s and numbers
+	//trim #'s
 	data.sequence, res = strings.CutPrefix(data.sequence, "#")
 	if res == true {
+		for i, char := range strings.Split(data.sequence, "") {
+			if i >= data.nums[0] {
+				break
+			} else if i == data.nums[0]-1 && char == "#" {
+				return false
+
+			} else if char == "." {
+				return false
+			}
+		}
 		data.sequence = data.sequence[data.nums[0]:]
 		data.nums = data.nums[1:]
-		fmt.Println("trimmed #")
-		trim_picross(data)
+		fmt.Println("trimmed #", data)
+		if !trim_picross(data) {
+			return false
+		}
+		fmt.Println("after post-trim# trimcall")
 	}
+	fmt.Println("Before before chunks")
 	if len(data.nums) == 0 {
-		return
+		return true
 	}
+	fmt.Println("before chunks")
 	//trim first section if its too short to fit first num
+	// TODO: return false if invalid trim
 	chunks := strings.Split(data.sequence, ".")
 	if len(strings.Split(chunks[0], "")) < data.nums[0] {
 		data.sequence = strings.Join(chunks[1:], "")
-		trim_picross(data)
+		if !trim_picross(data) {
+			return false
+		}
 	}
+	if len(data.nums) == 0 {
+		return true
+	}
+	fmt.Println("after chunks")
+
 	chunks = strings.Split(data.sequence, ".")
 	first_chunk := chunks[0]
 	dist_to_hash := len(strings.Split(strings.Split(first_chunk, "#")[0], ""))
+
+	// grow first hash, and then trim if it's big enough
+	// TODO: add false condition if invalid grow
 	if dist_to_hash < data.nums[0]+1 {
 		s := strings.Split(first_chunk, "")
 		len_of_hashes := 0
@@ -83,9 +113,12 @@ func trim_picross(data *picross) {
 			chunks[0] = strings.Join(s, "")
 			data.sequence = strings.Join(chunks, "")
 			data.nums = data.nums[1:]
-			trim_picross(data)
+			if !trim_picross(data) {
+				return false
+			}
 		}
 	}
+	return true
 }
 
 func flip_picross(data *picross) {
@@ -93,11 +126,16 @@ func flip_picross(data *picross) {
 	slices.Reverse(data.nums)
 }
 
-func reduce_picross(data *picross) {
-	trim_picross(data)
-	flip_picross(data)
-	trim_picross(data)
-	flip_picross(data)
+func reduce_picross(data *picross) bool {
+	if trim_picross(data) {
+		flip_picross(data)
+		if trim_picross(data) {
+			flip_picross(data)
+			return true
+		}
+		return false
+	}
+	return false
 }
 
 func picross_recurs_dp(data *picross, saved map[*picross]int) int {
@@ -150,11 +188,11 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 				beginning := picross{sequence: first_sec, nums: data.nums[:i]}
 				leftover := picross{sequence: strings.Join(sections[1:], "."), nums: data.nums[i:]}
 				fmt.Println("beginning", beginning, "leftover", leftover)
-				reduce_picross(&beginning)
-				reduce_picross(&leftover)
-				ans := picross_recurs_dp(&beginning, saved) * picross_recurs_dp(&leftover, saved)
-				fmt.Println(beginning, leftover, "ans", ans)
-				sum += ans
+				if reduce_picross(&beginning) && reduce_picross(&leftover) {
+					ans := picross_recurs_dp(&beginning, saved) * picross_recurs_dp(&leftover, saved)
+					fmt.Println(beginning, leftover, "ans", ans)
+					sum += ans
+				}
 			}
 			saved[data] = sum
 			return sum
@@ -216,6 +254,8 @@ func brute_force_picross(s string, nums []int) int {
 				newseq = newseq + strings.Repeat(".", dots) + strings.Repeat("#", nums[k])
 			}
 			newseq = newseq + strings.Repeat(".", buckets[len(nums)])
+			fmt.Println("original, generated", s, newseq)
+			fmt.Println(i, j)
 			if springs_include(s, newseq) {
 				count++
 			}
@@ -230,7 +270,7 @@ func brute_force_picross(s string, nums []int) int {
 				}
 				buckets[j]--
 				buckets[j+1]++
-				if buckets[j] == 0 {
+				if buckets[i] == 0 {
 					i++
 				}
 				j++
