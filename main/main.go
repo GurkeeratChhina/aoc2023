@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"unicode/utf8"
 )
 
 const inputtest = "../inputs/test.txt"
@@ -100,7 +101,25 @@ func LCM_slice(s []int) int {
 	return l
 }
 
+func Reverse(s string) string {
+	size := len(s)
+	buf := make([]byte, size)
+	for start := 0; start < size; {
+		r, n := utf8.DecodeRuneInString(s[start:])
+		start += n
+		utf8.EncodeRune(buf[size-start:], r)
+	}
+	return string(buf)
+}
+
+func slice_sum(s []int) (r int) {
+	for _, i := range s {
+		r += i
+	}
+	return
+}
+
 func main() {
-	fmt.Println("Part 1: ", d11p1())
+	fmt.Println("Part 1: ", d12p1())
 	fmt.Println("Part 2: ", d11p2())
 }

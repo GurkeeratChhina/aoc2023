@@ -47,20 +47,19 @@ func star_locs(file string) (xs, ys []int) {
 	return
 }
 
-func d11p1() int {
+func d11(scale int) int {
 	xs, ys := star_locs(input11)
 	sort.Ints(xs)
 	sort.Ints(ys)
-	expand(xs, 1)
-	expand(ys, 1)
+	expand(xs, scale)
+	expand(ys, scale)
 	return pairwise_dist(xs) + pairwise_dist(ys)
 }
 
+func d11p1() int {
+	return d11(1)
+}
+
 func d11p2() int {
-	xs, ys := star_locs(input11)
-	sort.Ints(xs)
-	sort.Ints(ys)
-	expand(xs, 1000000-1)
-	expand(ys, 1000000-1)
-	return pairwise_dist(xs) + pairwise_dist(ys)
+	return d11(999999)
 }
