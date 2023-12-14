@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"runtime/debug"
 	"slices"
 	"strings"
 
@@ -229,10 +230,17 @@ func brute_force_picross(s string, nums []int) int {
 		return 0
 	} else {
 		count := 0
-		for _, combin := range combin.Combinations(leftover+len(nums), len(nums)) {
-			buckets := build_stars_and_bars(combin, leftover+len(nums))
-			var newseq string
 
+		// initialize buckets
+		num_stars := leftover
+		num_bars := len(nums)
+		buckets := []int{num_stars}
+		for i := 0; i < num_bars; i++ {
+			buckets = append(buckets, 0)
+		}
+
+		for {
+			var newseq string
 			for k := 0; k < len(nums); k++ {
 				dots := buckets[k]
 				if k > 0 {
@@ -243,7 +251,23 @@ func brute_force_picross(s string, nums []int) int {
 			newseq = newseq + strings.Repeat(".", buckets[len(nums)])
 
 			if springs_include(s, newseq) {
+				fmt.Println(s, newseq)
 				count++
+			}
+			if buckets[num_bars] == num_stars {
+				break
+			}
+			if buckets[0] > 0 {
+				buckets[0]--
+				buckets[1]++
+			} else {
+				i := 1
+				for buckets[i] == 0 {
+					i++
+				}
+				buckets[0] = buckets[i] - 1
+				buckets[i+1]++
+				buckets[i] = 0
 			}
 		}
 		return count
@@ -263,7 +287,7 @@ func get_seq_counts(line string, copies int) picross {
 }
 
 func d12(amount int) int {
-	f, err := os.Open(inputtest)
+	f, err := os.Open(input12)
 	check(err)
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
@@ -273,9 +297,7 @@ func d12(amount int) int {
 		answer_cache := make(map[*picross]int)
 		data := get_seq_counts(scanner.Text(), amount)
 
-		// fmt.Println(data)
 		reduce_picross(&data)
-		// fmt.Println(data)
 		ans := picross_recurs_dp(&data, answer_cache)
 		fmt.Println(ans)
 		sum += ans
@@ -288,5 +310,6 @@ func d12p1() int {
 }
 
 func d12p2() int {
+	debug.SetMaxStack(8000000000)
 	return d12(5)
 }
