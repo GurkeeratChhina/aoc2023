@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"regexp"
 	"runtime/debug"
@@ -21,7 +20,7 @@ type picross struct {
 
 func picross_isEqual(data1, data2 *picross) bool {
 	if data1.sequence == data2.sequence && len(data1.nums) == len(data2.nums) {
-		for i, _ := range data1.nums {
+		for i := range data1.nums {
 			if data1.nums[i] != data2.nums[i] {
 				return false
 			}
@@ -157,6 +156,18 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 		}
 		saved[data] = 1
 		return 1
+	} else if slice_sum(data.nums)+len(data.nums)-1 == len(strings.Split(data.sequence, "")) {
+		generated_seq := strings.Repeat("#", data.nums[0])
+		for i := 1; i < len(data.nums); i++ {
+			generated_seq += "." + strings.Repeat("#", data.nums[i])
+		}
+		if springs_include(data.sequence, generated_seq) {
+			saved[data] = 1
+			return 1
+		} else {
+			saved[data] = 0
+			return 0
+		}
 	} else {
 		sections := strings.Split(data.sequence, ".")
 		first_sec := sections[0]
@@ -164,7 +175,18 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 		if len(sections) == 1 {
 			answer := 0
 			if r.MatchString(first_sec) {
-				answer = brute_force_picross(first_sec, data.nums)
+				replace_hash := "#" + strings.Join(strings.Split(first_sec, "")[1:], "")
+				replace_dot := strings.Join(strings.Split(first_sec, "")[1:], "")
+				picross_hash := picross{sequence: replace_hash, nums: append([]int(nil), data.nums...)}
+				picross_dot := picross{sequence: replace_dot, nums: append([]int(nil), data.nums...)}
+				if trim_picross(&picross_hash) {
+					//fmt.Println(picross_hash)
+					answer += picross_recurs_dp(&picross_hash, saved)
+				}
+				if trim_picross(&picross_dot) {
+					//fmt.Println(picross_dot)
+					answer += picross_recurs_dp(&picross_dot, saved)
+				}
 			} else {
 				answer = count_stars_and_bars(len_first, data.nums)
 			}
@@ -223,57 +245,6 @@ func springs_include(seq1, seq2 string) bool {
 	return true
 }
 
-func brute_force_picross(s string, nums []int) int {
-	seq_len := len(strings.Split(s, ""))
-	leftover := seq_len - slice_sum(nums) - len(nums) + 1
-	if leftover < 0 {
-		return 0
-	} else {
-		count := 0
-
-		// initialize buckets
-		num_stars := leftover
-		num_bars := len(nums)
-		buckets := []int{num_stars}
-		for i := 0; i < num_bars; i++ {
-			buckets = append(buckets, 0)
-		}
-
-		for {
-			var newseq string
-			for k := 0; k < len(nums); k++ {
-				dots := buckets[k]
-				if k > 0 {
-					dots++
-				}
-				newseq = newseq + strings.Repeat(".", dots) + strings.Repeat("#", nums[k])
-			}
-			newseq = newseq + strings.Repeat(".", buckets[len(nums)])
-
-			if springs_include(s, newseq) {
-				fmt.Println(s, newseq)
-				count++
-			}
-			if buckets[num_bars] == num_stars {
-				break
-			}
-			if buckets[0] > 0 {
-				buckets[0]--
-				buckets[1]++
-			} else {
-				i := 1
-				for buckets[i] == 0 {
-					i++
-				}
-				buckets[0] = buckets[i] - 1
-				buckets[i+1]++
-				buckets[i] = 0
-			}
-		}
-		return count
-	}
-}
-
 func get_seq_counts(line string, copies int) picross {
 	a := strings.Split(line, " ")
 	r := regexp.MustCompile("\\.+")
@@ -299,7 +270,7 @@ func d12(amount int) int {
 
 		reduce_picross(&data)
 		ans := picross_recurs_dp(&data, answer_cache)
-		fmt.Println(ans)
+		// fmt.Println(ans)
 		sum += ans
 	}
 	return sum
