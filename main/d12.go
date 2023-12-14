@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"regexp"
 	"slices"
@@ -149,7 +148,7 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 	r := regexp.MustCompile("\\#")
 	for key, val := range saved {
 		if picross_isEqual(data, key) {
-			fmt.Println("saved")
+			// fmt.Println("saved")
 			return val
 		}
 	}
@@ -163,10 +162,6 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 		}
 		saved[data] = 1
 		return 1
-	} else if slice_sum(data.nums)+len(data.nums)-1 == len(strings.Split(data.sequence, "")) {
-		fmt.Println("exact length")
-		saved[data] = 1
-		return 1
 	} else {
 		sections := strings.Split(data.sequence, ".")
 		first_sec := sections[0]
@@ -175,10 +170,10 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 			// fmt.Println("one section")
 			answer := 0
 			if r.MatchString(first_sec) {
-				fmt.Println("bruteforcing")
+				// fmt.Println("bruteforcing")
 				answer = brute_force_picross(first_sec, data.nums)
 			} else {
-				fmt.Println("combinatorics", first_sec, data.nums)
+				// fmt.Println("combinatorics", first_sec, data.nums)
 				answer = count_stars_and_bars(len_first, data.nums)
 				// fmt.Println(answer)
 			}
@@ -190,10 +185,11 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 			for i := 0; i <= len(data.nums); i++ {
 				beginning := picross{sequence: first_sec, nums: data.nums[:i]}
 				leftover := picross{sequence: strings.Join(sections[1:], "."), nums: data.nums[i:]}
-				fmt.Println("beginning", beginning, "leftover", leftover)
+				// fmt.Println("beginning", beginning, "leftover", leftover)
 				if reduce_picross(&beginning) && reduce_picross(&leftover) {
+					// fmt.Println(beginning, leftover)
 					ans := picross_recurs_dp(&beginning, saved) * picross_recurs_dp(&leftover, saved)
-					fmt.Println(beginning, leftover, "ans", ans)
+					// fmt.Println(beginning, leftover, "ans", ans)
 					sum += ans
 				}
 			}
@@ -246,8 +242,6 @@ func brute_force_picross(s string, nums []int) int {
 	leftover := seq_len - slice_sum(nums) - len(nums) + 1
 	if leftover < 0 {
 		return 0
-	} else if leftover == 0 {
-		return 1
 	} else {
 		count := 0
 		for _, combin := range combin.Combinations(leftover+len(nums), len(nums)) {
@@ -263,7 +257,7 @@ func brute_force_picross(s string, nums []int) int {
 			}
 			newseq = newseq + strings.Repeat(".", buckets[len(nums)])
 
-			fmt.Println("original, generated", s, newseq, nums)
+			// fmt.Println("original, generated", s, newseq, nums)
 			if springs_include(s, newseq) {
 				count++
 			}
@@ -296,7 +290,7 @@ func d12p1() int {
 		// fmt.Println(data)
 		//14, 5, 6, 24
 		ans := picross_recurs_dp(&data, answer_cache)
-		fmt.Println(ans)
+		// fmt.Println(ans)
 		sum += ans
 	}
 
