@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math"
 	"os"
 	"regexp"
 	"slices"
@@ -32,7 +31,9 @@ func picross_isEqual(data1, data2 *picross) bool {
 }
 
 func trim_picross(data *picross) bool {
-	fmt.Println("called trim", data)
+	// fmt.Println("called trim", data)
+	data.sequence = strings.Trim(data.sequence, ".")
+
 	if len(data.nums) == 0 {
 		return true
 	}
@@ -42,40 +43,42 @@ func trim_picross(data *picross) bool {
 	if slice_sum(data.nums)+len(data.nums)-1 == len(strings.Split(data.sequence, "")) {
 		return true
 	}
-	fmt.Println("trimming", data)
-	res := false
-	data.sequence = strings.Trim(data.sequence, ".")
 
 	//trim #'s
+	res := false
 	data.sequence, res = strings.CutPrefix(data.sequence, "#")
 	if res == true {
 		for i, char := range strings.Split(data.sequence, "") {
 			if i >= data.nums[0] {
 				break
 			} else if i == data.nums[0]-1 && char == "#" {
+				// fmt.Println("#trim false1")
 				return false
-
-			} else if char == "." {
+			} else if i < data.nums[0]-1 && char == "." {
+				// fmt.Println("#trim false2")
 				return false
 			}
 		}
 		data.sequence = data.sequence[data.nums[0]:]
 		data.nums = data.nums[1:]
-		fmt.Println("trimmed #", data)
+		// fmt.Println("trimmed #", data)
 		if !trim_picross(data) {
 			return false
 		}
-		fmt.Println("after post-trim# trimcall")
+		// fmt.Println("after post-trim# trimcall")
 	}
-	fmt.Println("Before before chunks")
 	if len(data.nums) == 0 {
 		return true
 	}
-	fmt.Println("before chunks")
+
 	//trim first section if its too short to fit first num
-	// TODO: return false if invalid trim
 	chunks := strings.Split(data.sequence, ".")
 	if len(strings.Split(chunks[0], "")) < data.nums[0] {
+		for _, c := range strings.Split(chunks[0], "") {
+			if c == "#" {
+				return false
+			}
+		}
 		data.sequence = strings.Join(chunks[1:], "")
 		if !trim_picross(data) {
 			return false
@@ -84,7 +87,6 @@ func trim_picross(data *picross) bool {
 	if len(data.nums) == 0 {
 		return true
 	}
-	fmt.Println("after chunks")
 
 	chunks = strings.Split(data.sequence, ".")
 	first_chunk := chunks[0]
@@ -95,6 +97,7 @@ func trim_picross(data *picross) bool {
 	if dist_to_hash < data.nums[0]+1 {
 		s := strings.Split(first_chunk, "")
 		len_of_hashes := 0
+		// grow and count length
 		for i := dist_to_hash; i < len(s); i++ {
 			if i < data.nums[0] {
 				s[i] = "#"
@@ -104,6 +107,9 @@ func trim_picross(data *picross) bool {
 			} else {
 				break
 			}
+		}
+		if len_of_hashes > data.nums[0] {
+			return false
 		}
 		if len_of_hashes == data.nums[0] {
 			s = s[dist_to_hash+data.nums[0]:]
@@ -139,30 +145,25 @@ func reduce_picross(data *picross) bool {
 }
 
 func picross_recurs_dp(data *picross, saved map[*picross]int) int {
-	fmt.Println("recurs call", data.sequence, data.nums)
+	// fmt.Println("recurs call", data.sequence, data.nums)
 	r := regexp.MustCompile("\\#")
 	for key, val := range saved {
-		// fmt.Println("found saved")
 		if picross_isEqual(data, key) {
 			return val
 		}
 	}
 	if len(data.nums) == 0 {
-		fmt.Println("no nums")
-		count := 0
+		// fmt.Println("no nums")
 		for _, char := range strings.Split(data.sequence, "") {
-			if char == "?" {
-				count++
-			} else if char == "#" {
+			if char == "#" {
 				saved[data] = 0
 				return 0
 			}
 		}
-		ans := int(math.Pow(2, float64(count)))
-		saved[data] = ans
-		return ans
+		saved[data] = 1
+		return 1
 	} else if slice_sum(data.nums)+len(data.nums)-1 == len(strings.Split(data.sequence, "")) {
-		fmt.Println("exact length")
+		// fmt.Println("exact length")
 		saved[data] = 1
 		return 1
 	} else {
@@ -170,19 +171,20 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 		first_sec := sections[0]
 		len_first := len(strings.Split(sections[0], ""))
 		if len(sections) == 1 {
-			fmt.Println("one section")
+			// fmt.Println("one section")
 			answer := 0
 			if r.MatchString(first_sec) {
 				fmt.Println("bruteforcing")
 				answer = brute_force_picross(first_sec, data.nums)
 			} else {
-				fmt.Println("combinatorics")
+				fmt.Println("combinatorics", first_sec, data.nums)
 				answer = stars_and_bars(len_first, data.nums)
+				fmt.Println(answer)
 			}
 			saved[data] = answer
 			return answer
 		} else {
-			fmt.Println("multiple sections", sections)
+			// fmt.Println("multiple sections", sections)
 			sum := 0
 			for i := 0; i < len(data.nums); i++ {
 				beginning := picross{sequence: first_sec, nums: data.nums[:i]}
@@ -218,7 +220,7 @@ func springs_include(seq1, seq2 string) bool {
 	chars1 := strings.Split(seq1, "")
 	chars2 := strings.Split(seq2, "")
 	if len(chars1) != len(chars2) {
-		fmt.Println(seq1, seq2)
+		// fmt.Println(seq1, seq2)
 		panic("sequences have different lengths!")
 	}
 	for i := 0; i < len(chars1); i++ {
@@ -254,8 +256,8 @@ func brute_force_picross(s string, nums []int) int {
 				newseq = newseq + strings.Repeat(".", dots) + strings.Repeat("#", nums[k])
 			}
 			newseq = newseq + strings.Repeat(".", buckets[len(nums)])
-			fmt.Println("original, generated", s, newseq)
-			fmt.Println(i, j)
+			// fmt.Println("original, generated", s, newseq)
+			// fmt.Println(i, j)
 			if springs_include(s, newseq) {
 				count++
 			}
@@ -289,7 +291,7 @@ func get_seq_counts(line string) picross {
 }
 
 func d12p1() int {
-	f, err := os.Open(input12)
+	f, err := os.Open(inputtest)
 	check(err)
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
