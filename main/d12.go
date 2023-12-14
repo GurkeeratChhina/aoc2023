@@ -149,6 +149,7 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 	r := regexp.MustCompile("\\#")
 	for key, val := range saved {
 		if picross_isEqual(data, key) {
+			fmt.Println("saved")
 			return val
 		}
 	}
@@ -163,7 +164,7 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 		saved[data] = 1
 		return 1
 	} else if slice_sum(data.nums)+len(data.nums)-1 == len(strings.Split(data.sequence, "")) {
-		// fmt.Println("exact length")
+		fmt.Println("exact length")
 		saved[data] = 1
 		return 1
 	} else {
@@ -178,15 +179,15 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 				answer = brute_force_picross(first_sec, data.nums)
 			} else {
 				fmt.Println("combinatorics", first_sec, data.nums)
-				answer = stars_and_bars(len_first, data.nums)
-				fmt.Println(answer)
+				answer = count_stars_and_bars(len_first, data.nums)
+				// fmt.Println(answer)
 			}
 			saved[data] = answer
 			return answer
 		} else {
 			// fmt.Println("multiple sections", sections)
 			sum := 0
-			for i := 0; i < len(data.nums); i++ {
+			for i := 0; i <= len(data.nums); i++ {
 				beginning := picross{sequence: first_sec, nums: data.nums[:i]}
 				leftover := picross{sequence: strings.Join(sections[1:], "."), nums: data.nums[i:]}
 				fmt.Println("beginning", beginning, "leftover", leftover)
@@ -202,7 +203,7 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 	}
 }
 
-func stars_and_bars(length int, sections []int) int {
+func count_stars_and_bars(length int, sections []int) int {
 	stars := length - slice_sum(sections) - len(sections) + 1
 	bars := len(sections)
 	if stars == 0 {
@@ -214,6 +215,15 @@ func stars_and_bars(length int, sections []int) int {
 	} else {
 		return combin.Binomial(stars+bars, bars)
 	}
+}
+
+func build_stars_and_bars(combination []int, max int) (res []int) {
+	new_c := append([]int{-1}, combination...)
+	new_c = append(new_c, max)
+	for i := 0; i < len(new_c)-1; i++ {
+		res = append(res, new_c[i+1]-new_c[i]-1)
+	}
+	return
 }
 
 func springs_include(seq1, seq2 string) bool {
@@ -240,14 +250,10 @@ func brute_force_picross(s string, nums []int) int {
 		return 1
 	} else {
 		count := 0
-		buckets := []int{leftover}
-		for i := 0; i < len(nums); i++ {
-			buckets = append(buckets, 0)
-		}
-		// fmt.Println(s, nums, buckets)
-		i, j := 0, 0
-		for {
+		for _, combin := range combin.Combinations(leftover+len(nums), len(nums)) {
+			buckets := build_stars_and_bars(combin, leftover+len(nums))
 			var newseq string
+
 			for k := 0; k < len(nums); k++ {
 				dots := buckets[k]
 				if k > 0 {
@@ -256,26 +262,10 @@ func brute_force_picross(s string, nums []int) int {
 				newseq = newseq + strings.Repeat(".", dots) + strings.Repeat("#", nums[k])
 			}
 			newseq = newseq + strings.Repeat(".", buckets[len(nums)])
-			// fmt.Println("original, generated", s, newseq)
-			// fmt.Println(i, j)
+
+			fmt.Println("original, generated", s, newseq, nums)
 			if springs_include(s, newseq) {
 				count++
-			}
-			if buckets[len(nums)] == leftover {
-				break
-			} else {
-				// advance loop
-				if j == len(nums) {
-					buckets[j]--
-					buckets[i+1]++
-					j = i
-				}
-				buckets[j]--
-				buckets[j+1]++
-				if buckets[i] == 0 {
-					i++
-				}
-				j++
 			}
 		}
 		return count
@@ -304,6 +294,7 @@ func d12p1() int {
 		// fmt.Println(data)
 		reduce_picross(&data)
 		// fmt.Println(data)
+		//14, 5, 6, 24
 		ans := picross_recurs_dp(&data, answer_cache)
 		fmt.Println(ans)
 		sum += ans
