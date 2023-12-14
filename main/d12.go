@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"regexp"
 	"slices"
@@ -46,6 +47,7 @@ func trim_picross(data *picross) bool {
 	//trim #'s
 	res := false
 	data.sequence, res = strings.CutPrefix(data.sequence, "#")
+	// potential bug with mutation
 	if res == true {
 		for i, char := range strings.Split(data.sequence, "") {
 			if i >= data.nums[0] {
@@ -275,13 +277,13 @@ func get_seq_counts(line string) picross {
 }
 
 func d12p1() int {
-	f, err := os.Open(inputtest)
+	f, err := os.Open(input12)
 	check(err)
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	sum := 0
 	answer_cache := make(map[*picross]int)
-
+	i := 0
 	for scanner.Scan() {
 		data := get_seq_counts(scanner.Text())
 
@@ -292,7 +294,8 @@ func d12p1() int {
 		ans := picross_recurs_dp(&data, answer_cache)
 		// fmt.Println(ans)
 		sum += ans
+		fmt.Println(i, ans)
+		i++
 	}
-
 	return sum
 }
