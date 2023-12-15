@@ -148,6 +148,7 @@ func picross_recurs_dp(data *picross, saved map[*picross]int) int {
 		}
 	}
 	if len(data.nums) == 0 {
+		// use regex instead
 		for _, char := range strings.Split(data.sequence, "") {
 			if char == "#" {
 				saved[data] = 0
