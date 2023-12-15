@@ -120,6 +120,6 @@ func slice_sum(s []int) (r int) {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d14p1())
-	fmt.Println("Part 2: ", d14p2())
+	fmt.Println("Part 1: ", d15p1())
+	fmt.Println("Part 2: ", d15p2())
 }
