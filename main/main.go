@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"time"
 	"unicode/utf8"
 )
 
@@ -117,6 +118,21 @@ func slice_sum(s []int) (r int) {
 		r += i
 	}
 	return
+}
+
+func my_max(a int, b ...int) int {
+	max := a
+	for _, num := range b {
+		if num > max {
+			max = num
+		}
+	}
+	return max
+}
+
+func timeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
 }
 
 func main() {
