@@ -108,21 +108,6 @@ func (q BFSBinaryTreeQueue) pop_smallest() (*BFSBinaryTreeQueue, BFSstate) {
 	}
 }
 
-func digit_grid(s bufio.Scanner) (grid [][]int, state_grid BFSstates) {
-	for s.Scan() {
-		var row []int
-		var BFSrow [][]BFSstate
-		for _, digit := range strings.Split(s.Text(), "") {
-			x, _ := strconv.Atoi(digit)
-			row = append(row, x)
-			BFSrow = append(BFSrow, []BFSstate{})
-		}
-		grid = append(grid, row)
-		state_grid = append(state_grid, BFSrow)
-	}
-	return
-}
-
 func (s BFSstates) add(new BFSstate) bool {
 	for _, state := range s[new.x][new.y] {
 		if state.direction == new.direction && state.steps == new.steps {
@@ -179,6 +164,21 @@ func BFS(grid [][]int, state_grid BFSstates, minsteps, maxsteps int) int {
 			}
 		}
 	}
+}
+
+func digit_grid(s bufio.Scanner) (grid [][]int, state_grid BFSstates) {
+	for s.Scan() {
+		var row []int
+		var BFSrow [][]BFSstate
+		for _, digit := range strings.Split(s.Text(), "") {
+			x, _ := strconv.Atoi(digit)
+			row = append(row, x)
+			BFSrow = append(BFSrow, []BFSstate{})
+		}
+		grid = append(grid, row)
+		state_grid = append(state_grid, BFSrow)
+	}
+	return
 }
 
 func d17(minsteps, maxsteps int) int {
