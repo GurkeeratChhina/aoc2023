@@ -36,7 +36,7 @@ type light_grid struct {
 	width   int
 }
 
-func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c chan int) int {
+func (l light_grid) illuminate_non_parallel(startx, starty, startdir int, e [][]bool) int {
 	count := 0
 	for i, j, dir := startx, starty, startdir; i >= 0 && j >= 0 && i < l.height && j < l.width; {
 		curr_mirror := l.mirrors[i][j]
@@ -44,37 +44,32 @@ func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c 
 		if curr_mirror > 2 {
 			// fmt.Println("encountered splitter")
 			if e[i][j] {
-				c <- count
 				return count
 			} else {
 				e[i][j] = true
 				count++
-				if dir%2 == curr_mirror%2 {
-					i, j, dir = step_forward(i, j, dir, 0)
+				if dir%2 == 1 {
+					//left or right
+					if curr_mirror == 3 {
+						// continue going
+						i, j, dir = step_forward(i, j, dir, 0)
+					} else {
+						//split
+						count += l.illuminate_non_parallel(i-1, j, 0, e)
+						count += l.illuminate_non_parallel(i+1, j, 2, e)
+						return count
+					}
 				} else {
-					c1, c2 := make(chan int), make(chan int)
-
-					dirleft := (4 + dir - 1) % 4
-					newx := i + direction_table[dirleft][0]
-					newy := i + direction_table[dirleft][1]
-					go l.illuminate_grid(newx, newy, dirleft, e, c1)
-
-					dirright := (4 + dir + 1) % 4
-					newx = i + direction_table[dirright][0]
-					newy = i + direction_table[dirright][1]
-					count += l.illuminate_grid(newx, newy, dirright, e, c2)
-
-					count += <-c1
-					// for k := 0; k < 2; k++ {
-					// 	select {
-					// 	case res1 := <-c1:
-					// 		count += res1
-					// 	case res2 := <-c2:
-					// 		count += res2
-					// 	}
-					// }
-					c <- count
-					return count
+					//up or down
+					if curr_mirror == 4 {
+						//continue going
+						i, j, dir = step_forward(i, j, dir, 0)
+					} else {
+						//split
+						count += l.illuminate_non_parallel(i, j+1, 1, e)
+						count += l.illuminate_non_parallel(i, j-1, 3, e)
+						return count
+					}
 				}
 			}
 		} else {
@@ -86,7 +81,6 @@ func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c 
 			i, j, dir = step_forward(i, j, dir, curr_mirror)
 		}
 	}
-	c <- count
 	return count
 }
 
@@ -127,6 +121,10 @@ func (grid light_grid) make_new_energized() (energized [][]bool) {
 	return
 }
 
+func illuminate_non_parallel_wrapper(x, y, dir int, g light_grid, c chan int) {
+	c <- g.illuminate_non_parallel(x, y, dir, g.make_new_energized())
+}
+
 func d16p1() int {
 	defer timeTrack(time.Now(), "d16p1")
 	f, err := os.Open(input16)
@@ -135,9 +133,8 @@ func d16p1() int {
 	scanner := bufio.NewScanner(f)
 
 	grid := build_light_grid(*scanner)
-	c := make(chan int)
-	go grid.illuminate_grid(0, 0, 1, grid.make_new_energized(), c)
-	return <-c
+
+	return grid.illuminate_non_parallel(0, 0, 1, grid.make_new_energized())
 }
 
 func d16p2() int {
@@ -147,20 +144,22 @@ func d16p2() int {
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 
-	max := 0
 	grid := build_light_grid(*scanner)
 
-	c := make(chan int)
+	ch := make(chan int)
+
 	for i := 0; i < grid.height; i++ {
-		go grid.illuminate_grid(i, 0, 1, grid.make_new_energized(), c)
-		go grid.illuminate_grid(i, grid.width-1, 3, grid.make_new_energized(), c)
+		go illuminate_non_parallel_wrapper(i, 0, 1, grid, ch)
+		go illuminate_non_parallel_wrapper(i, grid.width-1, 3, grid, ch)
 	}
 	for i := 0; i < grid.width; i++ {
-		go grid.illuminate_grid(0, i, 2, grid.make_new_energized(), c)
-		go grid.illuminate_grid(grid.height-1, i, 0, grid.make_new_energized(), c)
+		go illuminate_non_parallel_wrapper(0, i, 2, grid, ch)
+		go illuminate_non_parallel_wrapper(grid.height-1, i, 0, grid, ch)
 	}
-	for i := 0; i < grid.height+grid.width-1; i++ {
-		max = my_max(max, <-c)
+
+	max := 0
+	for i := 0; i < 2*(grid.height+grid.width); i++ {
+		max = my_max(max, <-ch)
 	}
 	return max
 }
