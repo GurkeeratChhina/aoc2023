@@ -30,7 +30,7 @@ func (s BFSstate) forward(turn int) (res BFSstate) {
 	if turn == 0 {
 		res.steps = s.steps + 1
 	} else {
-		res.steps = 0
+		res.steps = 1
 	}
 	res.direction = (s.direction + turn + 4) % 4
 	res.x = s.x + direction_table[res.direction][0]
@@ -142,7 +142,7 @@ func BFS(grid [][]int, state_grid BFSstates, minsteps, maxsteps int) int {
 	max_x := len(grid) - 1
 	max_y := len(grid[0]) - 1
 
-	current := BFSstate{x: max_x, y: max_y, direction: 0, steps: 0, value: 3}
+	current := BFSstate{x: 0, y: 0, direction: 1, steps: 0, value: 0}
 	var queue BFSBinaryTreeQueue
 	q := &queue
 	q = (*q).add(&current)
@@ -154,19 +154,22 @@ func BFS(grid [][]int, state_grid BFSstates, minsteps, maxsteps int) int {
 		}
 		q, current = q.pop_smallest()
 		// fmt.Println("after pop", current, q)
-		if current.x+current.y == 0 && current.steps > minsteps {
-			return current.value - grid[0][0]
-		} else if current.x+current.y == 0 {
+		if current.x == max_x && current.y == max_y && current.steps >= minsteps {
+			return current.value
+		} else if current.x == max_x && current.y == max_y {
 			continue
 		} else {
 			for i := -1; i < 2; i++ {
 				if current.steps < minsteps && i != 0 {
+					//fmt.Println("skipping1")
 					continue
 				}
 				next := current.forward(i)
-				if next.steps >= maxsteps || next.x < 0 || next.y < 0 || next.x > max_x || next.y > max_y {
+				if next.steps > maxsteps || next.x < 0 || next.y < 0 || next.x > max_x || next.y > max_y {
+					//fmt.Println("skipping2")
 					continue
 				} else {
+					//fmt.Println("not skipping")
 					next.value += grid[next.x][next.y]
 					// fmt.Println("have state to add", next, "for turn", i)
 					if state_grid.add(next) {
@@ -179,7 +182,7 @@ func BFS(grid [][]int, state_grid BFSstates, minsteps, maxsteps int) int {
 }
 
 func d17(minsteps, maxsteps int) int {
-	f, err := os.Open(inputtest)
+	f, err := os.Open(input17)
 	check(err)
 	defer f.Close()
 	scanner := bufio.NewScanner(f)

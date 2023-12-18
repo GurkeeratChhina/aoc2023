@@ -17,10 +17,10 @@ func step_forward(x, y, dir, mirror int) (newx, newy, newdir int) {
 		newdir = dir
 	} else if mirror == 1 {
 		// mirror = /
-		newdir = ((1-dir)%4 + 4) % 4
+		newdir = (1 - dir + 4) % 4
 	} else if mirror == 2 {
 		// mirror = \
-		newdir = ((3-dir)%4 + 4) % 4
+		newdir = (3 - dir + 4) % 4
 	} else {
 		panic("invalid direction for stepping")
 	}
@@ -36,7 +36,7 @@ type light_grid struct {
 	width   int
 }
 
-func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c chan int) {
+func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c chan int) int {
 	count := 0
 	for i, j, dir := startx, starty, startdir; i >= 0 && j >= 0 && i < l.height && j < l.width; {
 		curr_mirror := l.mirrors[i][j]
@@ -45,49 +45,36 @@ func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c 
 			// fmt.Println("encountered splitter")
 			if e[i][j] {
 				c <- count
+				return count
 			} else {
 				e[i][j] = true
 				count++
-				if dir%2 == 1 {
-					//left or right
-					if curr_mirror == 3 {
-						// continue going
-						i, j, dir = step_forward(i, j, dir, 0)
-					} else {
-						//split
-						c1, c2 := make(chan int), make(chan int)
-						go l.illuminate_grid(i-1, j, 0, e, c1)
-						go l.illuminate_grid(i+1, j, 2, e, c2)
-						for k := 0; k < 2; k++ {
-							select {
-							case res1 := <-c1:
-								count += res1
-							case res2 := <-c2:
-								count += res2
-							}
-						}
-						c <- count
-					}
+				if dir%2 == curr_mirror%2 {
+					i, j, dir = step_forward(i, j, dir, 0)
 				} else {
-					//up or down
-					if curr_mirror == 4 {
-						//continue going
-						i, j, dir = step_forward(i, j, dir, 0)
-					} else {
-						//split
-						c3, c4 := make(chan int), make(chan int)
-						go l.illuminate_grid(i, j+1, 1, e, c3)
-						go l.illuminate_grid(i, j-1, 3, e, c4)
-						for k := 0; k < 2; k++ {
-							select {
-							case res1 := <-c3:
-								count += res1
-							case res2 := <-c4:
-								count += res2
-							}
-						}
-						c <- count
-					}
+					c1, c2 := make(chan int), make(chan int)
+
+					dirleft := (4 + dir - 1) % 4
+					newx := i + direction_table[dirleft][0]
+					newy := i + direction_table[dirleft][1]
+					go l.illuminate_grid(newx, newy, dirleft, e, c1)
+
+					dirright := (4 + dir + 1) % 4
+					newx = i + direction_table[dirright][0]
+					newy = i + direction_table[dirright][1]
+					count += l.illuminate_grid(newx, newy, dirright, e, c2)
+
+					count += <-c1
+					// for k := 0; k < 2; k++ {
+					// 	select {
+					// 	case res1 := <-c1:
+					// 		count += res1
+					// 	case res2 := <-c2:
+					// 		count += res2
+					// 	}
+					// }
+					c <- count
+					return count
 				}
 			}
 		} else {
@@ -100,6 +87,7 @@ func (l light_grid) illuminate_grid(startx, starty, startdir int, e [][]bool, c 
 		}
 	}
 	c <- count
+	return count
 }
 
 func build_light_grid(s bufio.Scanner) (grid light_grid) {
@@ -140,7 +128,7 @@ func (grid light_grid) make_new_energized() (energized [][]bool) {
 }
 
 func d16p1() int {
-	defer timeTrack(time.Now(), "d16p2")
+	defer timeTrack(time.Now(), "d16p1")
 	f, err := os.Open(input16)
 	check(err)
 	defer f.Close()
