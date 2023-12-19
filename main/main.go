@@ -63,6 +63,9 @@ func intersect_intervals(ab, cd []int) []int {
 }
 
 func interval_subtract(ab, cd []int) [][]int {
+	if len(cd) == 0 || len(ab) == 0 {
+		return [][]int{ab}
+	}
 	if ab[0] < cd[0] && ab[1] > cd[1] {
 		//second interval is inside first
 		return [][]int{{ab[0], cd[0]}, {cd[1], ab[1]}}
@@ -137,5 +140,5 @@ func timeTrack(start time.Time, name string) {
 
 func main() {
 	fmt.Println("Part 1: ", d19p1())
-	// fmt.Println("Part 2: ", d18p2())
+	fmt.Println("Part 2: ", d19p2())
 }

@@ -11,7 +11,7 @@ import (
 const input19 = "../inputs/d19.txt"
 
 type part struct {
-	x, m, a, s, total int
+	x, m, a, s []int
 }
 
 type part_condition struct {
@@ -20,13 +20,18 @@ type part_condition struct {
 }
 
 type pipeline struct {
-	conditions []part_condition
+	criteria []part_condition
 }
 
 // "half" of parsing input
 func make_part(input_line string) part {
 	nums := extract_nums(input_line)
-	return part{x: nums[0], m: nums[1], a: nums[2], s: nums[3], total: slice_sum(nums)}
+	return part{
+		x: []int{nums[0], nums[0] + 1},
+		m: []int{nums[1], nums[1] + 1},
+		a: []int{nums[2], nums[2] + 1},
+		s: []int{nums[3], nums[3] + 1},
+	}
 }
 
 // other "half" of parsing input
@@ -48,28 +53,10 @@ func make_pipeline(input string) pipeline {
 			conds = append(conds, part_condition{ineq: ineq, res: res})
 		}
 	}
-	return pipeline{conditions: conds}
+	return pipeline{criteria: conds}
 }
 
-// actually doing the inequality somehow???
-func (p part) check_condition(ineq string) bool {
-	r := regexp.MustCompile("<")
-	if ineq == "true" {
-		return true
-	} else if r.MatchString(ineq) {
-		if p.get_attr([]rune(ineq)[0]) < extract_nums(ineq)[0] {
-			return true
-		}
-		return false
-	} else {
-		if p.get_attr([]rune(ineq)[0]) > extract_nums(ineq)[0] {
-			return true
-		}
-		return false
-	}
-}
-
-func (p part) get_attr(c rune) int {
+func (p part) get_attr(c rune) []int {
 	switch c {
 	case 'x':
 		return p.x
@@ -83,20 +70,86 @@ func (p part) get_attr(c rune) int {
 	panic("trying to get attribute not one of xmas")
 }
 
+func (p *part) set_attr(c rune, val []int) {
+	switch c {
+	case 'x':
+		p.x = val
+		return
+	case 'm':
+		p.m = val
+		return
+	case 'a':
+		p.a = val
+		return
+	case 's':
+		p.s = val
+		return
+	}
+	panic("trying to set attribute not one of xmas")
+}
+
+// returns a range of parts that match the inequality condition, and set p to the leftovers.
+func (p *part) intersect_condition(ineq string) part {
+	r := regexp.MustCompile("<")
+	var ineq_range []int
+	if ineq == "true" {
+		// fmt.Println("auto true")
+		return *p
+	} else if r.MatchString(ineq) {
+		ineq_range = []int{1, extract_nums(ineq)[0]}
+	} else {
+		ineq_range = []int{extract_nums(ineq)[0] + 1, 4001}
+	}
+	// fmt.Println("inequality range", ineq_range)
+	match := part{x: p.x, m: p.m, a: p.a, s: p.s}
+
+	char := []rune(ineq)[0]
+	new_range := intersect_intervals(p.get_attr(char), ineq_range)
+	leftover_ranges := interval_subtract(p.get_attr(char), new_range)
+	// fmt.Println("new range", new_range)
+	// fmt.Println("leftover range", leftover_ranges)
+
+	match.set_attr(char, new_range)
+	if len(leftover_ranges) == 0 {
+		p.set_attr(char, []int{})
+	} else {
+		p.set_attr(char, leftover_ranges[0])
+	}
+	// fmt.Println("in intersect", match, p)
+	return match
+}
+
+func (p part) is_valid() bool {
+	if len(p.x) < 2 || len(p.m) < 2 || len(p.a) < 2 || len(p.s) < 2 {
+		return false
+	}
+	if p.x[0] >= p.x[1] || p.m[0] >= p.m[1] || p.a[0] >= p.a[1] || p.s[0] >= p.s[1] {
+		return false
+	}
+	return true
+}
+
 // how to deal with the result of inequality, using recursion
-func (p part) process_pipeline(pl_key string, pipeline_map map[string]pipeline) int {
-	for _, cond := range pipeline_map[pl_key].conditions {
-		if p.check_condition(cond.ineq) {
+func (p part) process_pipeline(pl_key string, pipeline_map map[string]pipeline) (accepted_parts []part) {
+	for _, cond := range pipeline_map[pl_key].criteria {
+		match := p.intersect_condition(cond.ineq)
+		// fmt.Println("in process", match, p)
+		if match.is_valid() {
+			// fmt.Println("is valid")
 			if cond.res == "A" {
-				return p.total
+				accepted_parts = append(accepted_parts, match)
 			} else if cond.res == "R" {
-				return 0
 			} else {
-				return p.process_pipeline(cond.res, pipeline_map)
+				accepted_parts = append(accepted_parts, match.process_pipeline(cond.res, pipeline_map)...)
 			}
+		} else {
+			// fmt.Println("is not valid")
+		}
+		if !p.is_valid() {
+			break
 		}
 	}
-	panic("reached end of conditions somehow")
+	return
 }
 
 func d19p1() int {
@@ -124,10 +177,44 @@ func d19p1() int {
 
 	}
 
-	// summing results for each part
-	sum := 0
+	// finding accepted parts
+	var accepted []part
 	for _, p := range part_list {
-		sum += p.process_pipeline("in", pipeline_map)
+		accepted = append(accepted, p.process_pipeline("in", pipeline_map)...)
+	}
+
+	sum := 0
+	for _, p := range accepted {
+		// fmt.Println(p)
+		sum += p.x[0] + p.m[0] + p.a[0] + p.s[0]
+	}
+	return sum
+}
+
+func d19p2() int {
+	defer timeTrack(time.Now(), "d19p2")
+	f, err := os.Open(input19)
+	check(err)
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+
+	// make pipelines
+	pipeline_map := make(map[string]pipeline)
+	for scanner.Scan() {
+		if scanner.Text() == "" { // reached the empty line
+			break
+		}
+		pipeline_key := strings.Split(scanner.Text(), "{")[0]
+		pipeline_data := strings.Split(scanner.Text(), "{")[1]
+		pipeline_map[pipeline_key] = make_pipeline(pipeline_data)
+	}
+
+	max_part := part{x: []int{1, 4001}, m: []int{1, 4001}, a: []int{1, 4001}, s: []int{1, 4001}}
+	accepted := max_part.process_pipeline("in", pipeline_map)
+
+	sum := 0
+	for _, p := range accepted {
+		sum += (p.x[1] - p.x[0]) * (p.m[1] - p.m[0]) * (p.a[1] - p.a[0]) * (p.s[1] - p.s[0])
 	}
 	return sum
 }
