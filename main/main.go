@@ -136,6 +136,6 @@ func timeTrack(start time.Time, name string) {
 }
 
 func main() {
-	fmt.Println("Part 1: ", d18p1())
-	fmt.Println("Part 2: ", d18p2())
+	fmt.Println("Part 1: ", d19p1())
+	// fmt.Println("Part 2: ", d18p2())
 }
