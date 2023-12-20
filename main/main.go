@@ -133,12 +133,21 @@ func my_max(a int, b ...int) int {
 	return max
 }
 
+func string_slice_contains(slice []string, x string) bool {
+	for _, str := range slice {
+		if x == str {
+			return true
+		}
+	}
+	return false
+}
+
 func timeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.Printf("%s took %s", name, elapsed)
 }
 
 func main() {
-	fmt.Println("Part 1: ", d19p1())
-	fmt.Println("Part 2: ", d19p2())
+	fmt.Println("Part 1: ", d20p1())
+	fmt.Println("Part 2: ", d20p2())
 }

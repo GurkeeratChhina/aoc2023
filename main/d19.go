@@ -93,21 +93,17 @@ func (p *part) intersect_condition(ineq string) part {
 	r := regexp.MustCompile("<")
 	var ineq_range []int
 	if ineq == "true" {
-		// fmt.Println("auto true")
 		return *p
 	} else if r.MatchString(ineq) {
 		ineq_range = []int{1, extract_nums(ineq)[0]}
 	} else {
 		ineq_range = []int{extract_nums(ineq)[0] + 1, 4001}
 	}
-	// fmt.Println("inequality range", ineq_range)
-	match := part{x: p.x, m: p.m, a: p.a, s: p.s}
 
+	match := part{x: p.x, m: p.m, a: p.a, s: p.s}
 	char := []rune(ineq)[0]
 	new_range := intersect_intervals(p.get_attr(char), ineq_range)
 	leftover_ranges := interval_subtract(p.get_attr(char), new_range)
-	// fmt.Println("new range", new_range)
-	// fmt.Println("leftover range", leftover_ranges)
 
 	match.set_attr(char, new_range)
 	if len(leftover_ranges) == 0 {
@@ -115,7 +111,6 @@ func (p *part) intersect_condition(ineq string) part {
 	} else {
 		p.set_attr(char, leftover_ranges[0])
 	}
-	// fmt.Println("in intersect", match, p)
 	return match
 }
 
@@ -132,18 +127,15 @@ func (p part) is_valid() bool {
 // how to deal with the result of inequality, using recursion
 func (p part) process_pipeline(pl_key string, pipeline_map map[string]pipeline) (accepted_parts []part) {
 	for _, cond := range pipeline_map[pl_key].criteria {
+		// produces a part that matches the criteria, and sets p to the remainder which doesn't match the criteria
 		match := p.intersect_condition(cond.ineq)
-		// fmt.Println("in process", match, p)
 		if match.is_valid() {
-			// fmt.Println("is valid")
 			if cond.res == "A" {
 				accepted_parts = append(accepted_parts, match)
 			} else if cond.res == "R" {
 			} else {
 				accepted_parts = append(accepted_parts, match.process_pipeline(cond.res, pipeline_map)...)
 			}
-		} else {
-			// fmt.Println("is not valid")
 		}
 		if !p.is_valid() {
 			break
@@ -185,7 +177,6 @@ func d19p1() int {
 
 	sum := 0
 	for _, p := range accepted {
-		// fmt.Println(p)
 		sum += p.x[0] + p.m[0] + p.a[0] + p.s[0]
 	}
 	return sum
