@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"os"
+	"sort"
 	"time"
 )
 
@@ -44,29 +44,28 @@ func (tg tetrisgrid) addpoint(p *threepoint, data *tetris) {
 	return
 }
 
-func (t tetris) movedown(g tetrisgrid) {
+func (t *tetris) movedown(g tetrisgrid) {
 	found := false
 	for {
 		for _, p := range t.points {
 			if p.z-1 == 0 {
 				// reached bottom
 				for _, q := range t.points {
-					g.addpoint(q, &t)
+					g.addpoint(q, t)
 				}
 				return
 			}
-			// fix this line
 			below, ok := g[p.x][p.y][p.z-1]
 			if ok {
 				// found a tetris piece below
 				t.supported_by[below] = true
-				below.supporting[&t] = true
+				below.supporting[t] = true
 				found = true
 			}
 		}
 		if found {
 			for _, q := range t.points {
-				g.addpoint(q, &t)
+				g.addpoint(q, t)
 			}
 			return
 		}
@@ -76,7 +75,7 @@ func (t tetris) movedown(g tetrisgrid) {
 	}
 }
 
-func (t tetris) is_removable() bool {
+func (t *tetris) is_removable() bool {
 	for block := range t.supporting {
 		if len(block.supported_by) == 1 {
 			return false
@@ -97,34 +96,9 @@ func (t *tetris) will_fall(removed map[*tetris]bool) bool {
 func (t *tetris) remove(removed map[*tetris]bool) {
 	removed[t] = true
 	for s := range t.supporting {
-		fmt.Println(t, "is supporting", s)
+		// fmt.Println(t, "is supporting", s)
 		if s.will_fall(removed) {
 			s.remove(removed)
-		}
-	}
-}
-
-// sorting for tetris.lowest_z
-func sort_tetris_by_height(input []*tetris) (sorted []*tetris) {
-	length := len(input)
-	if length == 1 {
-		return input
-	}
-	lefthalf := sort_tetris_by_height(input[:length/2])
-	righthalf := sort_tetris_by_height(input[length/2:])
-	for i, j := 0, 0; ; {
-		if i == len(lefthalf) {
-			sorted = append(sorted, righthalf[j:]...)
-			return
-		} else if j == len(righthalf) {
-			sorted = append(sorted, lefthalf[i:]...)
-			return
-		} else if lefthalf[i].lowest_z <= righthalf[j].lowest_z {
-			sorted = append(sorted, lefthalf[i])
-			i++
-		} else {
-			sorted = append(sorted, righthalf[j])
-			j++
 		}
 	}
 }
@@ -169,7 +143,9 @@ func d22p1() int {
 		tetrislist = append(tetrislist, make_tetris(scanner.Text()))
 	}
 
-	tetrislist = sort_tetris_by_height(tetrislist)
+	// sort by lowest z
+	sort.SliceStable(tetrislist, func(i, j int) bool { return tetrislist[i].lowest_z < tetrislist[j].lowest_z })
+
 	grid := make(tetrisgrid)
 	for _, t := range tetrislist {
 		t.movedown(grid)
@@ -186,7 +162,7 @@ func d22p1() int {
 
 func d22p2() int {
 	defer timeTrack(time.Now(), "d22p2")
-	f, err := os.Open(inputtest)
+	f, err := os.Open(input22)
 	check(err)
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
@@ -196,7 +172,9 @@ func d22p2() int {
 		tetrislist = append(tetrislist, make_tetris(scanner.Text()))
 	}
 
-	tetrislist = sort_tetris_by_height(tetrislist)
+	// sort by lowest z
+	sort.SliceStable(tetrislist, func(i, j int) bool { return tetrislist[i].lowest_z < tetrislist[j].lowest_z })
+
 	grid := make(tetrisgrid)
 	for _, t := range tetrislist {
 		t.movedown(grid)
@@ -206,7 +184,7 @@ func d22p2() int {
 	for _, t := range tetrislist {
 		removed := make(map[*tetris]bool)
 		t.remove(removed)
-		fmt.Println(t, removed)
+		// fmt.Println(t, removed)
 		sum += len(removed) - 1
 	}
 
