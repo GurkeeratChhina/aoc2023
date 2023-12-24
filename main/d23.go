@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"slices"
 	"time"
 )
 
@@ -141,6 +142,38 @@ func (g *graph) create_edges(locs node_locs, m maze) {
 	}
 }
 
+func (g *graph) max_undirected_simple(current *node, end *node, visited []*node) (bool, int) {
+	max_so_far := current.value
+	if current == end {
+		// fmt.Println("found end")
+		return true, max_so_far
+	}
+	for _, e := range current.incoming_edges {
+		if !slices.Contains(visited, e.source) {
+			valid, max_len := g.max_undirected_simple(e.source, end, append(visited, current))
+			if valid {
+				// fmt.Println("src", current.value, max_len, e.value)
+				max_so_far = max(max_so_far, max_len+e.value)
+			}
+		}
+	}
+	for _, e := range current.outgoing_edges {
+		if !slices.Contains(visited, e.dest) {
+			valid, max_len := g.max_undirected_simple(e.dest, end, append(visited, current))
+			if valid {
+				// fmt.Println("dst", current.value, max_len, e.value, max_so_far)
+				max_so_far = max(max_so_far, max_len+e.value)
+			}
+		}
+	}
+	if max_so_far > current.value {
+		// fmt.Println("max that is returned", max_so_far)
+		return true, max_so_far
+	} else {
+		return false, 0
+	}
+}
+
 func d23p1() int {
 	defer timeTrack(time.Now(), "d23p1")
 	f, err := os.Open(input23)
@@ -158,7 +191,7 @@ func d23p1() int {
 	g.create_nodes(locs, m)
 	g.create_edges(locs, m)
 
-	// ans := g.max_path(locs[len(m)-1][len(m[0])-2])
+	g.max_path(locs[len(m)-1][len(m[0])-2])
 	// fmt.Println("nodes of g")
 	// for _, n := range g.nodes {
 	// 	fmt.Println(n)
@@ -185,5 +218,6 @@ func d23p2() int {
 	g.create_nodes(locs, m)
 	g.create_edges(locs, m)
 
-	return 0
+	_, ans := g.max_undirected_simple(locs[0][1], locs[len(m)-1][len(m[0])-2], []*node{})
+	return ans - 2
 }
