@@ -21,7 +21,7 @@ type edge struct {
 	dest   *node
 }
 
-type graph struct {
+type mygraph struct {
 	nodes []*node
 	edges []*edge
 }
@@ -71,7 +71,7 @@ func (m maze) walk(current, direction point) (int, point) {
 	return steps + 1, current
 }
 
-func (g *graph) max_path(end *node) int {
+func (g *mygraph) max_path(end *node) int {
 	for i := 0; i < len(g.nodes); i++ {
 		for _, e := range g.edges {
 			e.dest.value = max(e.dest.value, e.source.value+e.value)
@@ -80,7 +80,7 @@ func (g *graph) max_path(end *node) int {
 	return end.value
 }
 
-func create_node(val int, g *graph, locs node_locs, location point) {
+func create_node(val int, g *mygraph, locs node_locs, location point) {
 	if _, ok := locs[location.x][location.y]; ok { // node already exists at point
 		return
 	}
@@ -92,7 +92,7 @@ func create_node(val int, g *graph, locs node_locs, location point) {
 	g.nodes = append(g.nodes, n)
 }
 
-func (g *graph) create_nodes(locs node_locs, m maze) {
+func (g *mygraph) create_nodes(locs node_locs, m maze) {
 	for i, row := range m {
 		for j, symbol := range row {
 			if symbol == 'v' || symbol == '^' {
@@ -108,7 +108,7 @@ func (g *graph) create_nodes(locs node_locs, m maze) {
 	create_node(1, g, locs, point{len(m) - 1, len(m[0]) - 2})
 }
 
-func create_edge(src *node, g *graph, m maze, locs node_locs, start point, dir point) {
+func create_edge(src *node, g *mygraph, m maze, locs node_locs, start point, dir point) {
 	steps, end_point := m.walk(start, dir)
 	end_node := locs[end_point.x][end_point.y]
 	newedge := &edge{value: steps, source: src, dest: end_node}
@@ -117,7 +117,7 @@ func create_edge(src *node, g *graph, m maze, locs node_locs, start point, dir p
 	g.edges = append(g.edges, newedge)
 }
 
-func (g *graph) create_edges(locs node_locs, m maze) {
+func (g *mygraph) create_edges(locs node_locs, m maze) {
 	for i, val1 := range locs {
 		if i == 0 { // start node
 			create_edge(val1[1], g, m, locs, point{0, 1}, point{1, 0})
@@ -142,7 +142,7 @@ func (g *graph) create_edges(locs node_locs, m maze) {
 	}
 }
 
-func (g *graph) max_undirected_simple(current *node, end *node, visited []*node) (bool, int) {
+func (g *mygraph) max_undirected_simple(current *node, end *node, visited []*node) (bool, int) {
 	max_so_far := current.value
 	if current == end {
 		// fmt.Println("found end")
@@ -187,7 +187,7 @@ func d23p1() int {
 	}
 
 	locs := make(node_locs)
-	g := graph{}
+	g := mygraph{}
 	g.create_nodes(locs, m)
 	g.create_edges(locs, m)
 
@@ -214,7 +214,7 @@ func d23p2() int {
 	}
 
 	locs := make(node_locs)
-	g := graph{}
+	g := mygraph{}
 	g.create_nodes(locs, m)
 	g.create_edges(locs, m)
 
